@@ -16,6 +16,7 @@ import com.senzing.sdk.core.SzCoreEnvironment;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.EnumSet;
 import java.util.Set;
@@ -188,11 +189,12 @@ public class SenzingToElastic {
 
       String username = null;
       String password = null;
-      String userInfo = uri.getUserInfo();
+      // Split before decoding, so a percent-encoded ':' stays part of the username or password
+      String userInfo = uri.getRawUserInfo();
       if (userInfo != null) {
         int colon = userInfo.indexOf(':');
-        username = (colon < 0) ? userInfo : userInfo.substring(0, colon);
-        password = (colon < 0) ? "" : userInfo.substring(colon + 1);
+        username = decode((colon < 0) ? userInfo : userInfo.substring(0, colon));
+        password = decode((colon < 0) ? "" : userInfo.substring(colon + 1));
       }
 
       try {
@@ -201,6 +203,11 @@ public class SenzingToElastic {
       } catch (URISyntaxException e) {
         throw new IllegalArgumentException(usage);
       }
+    }
+
+    // Percent-decodes a URL component; unlike form encoding, '+' is a literal plus sign
+    private static String decode(String value) {
+      return URLDecoder.decode(value.replace("+", "%2B"), StandardCharsets.UTF_8);
     }
   }
 }

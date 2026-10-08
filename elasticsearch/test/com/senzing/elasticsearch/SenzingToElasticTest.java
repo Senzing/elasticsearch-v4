@@ -53,6 +53,11 @@ class SenzingToElasticTest {
     assertEquals("elastic", url.username());
     assertEquals("p@ss:word", url.password());
 
+    SenzingToElastic.ElasticUrl encoded = SenzingToElastic.ElasticUrl.parse("http://us%3Aer:a+b%2Fc@localhost:9200");
+    assertEquals("http://localhost:9200", encoded.host().toString());
+    assertEquals("us:er", encoded.username());
+    assertEquals("a+b/c", encoded.password());
+
     SenzingToElastic.ElasticUrl userOnly = SenzingToElastic.ElasticUrl.parse("http://reader@localhost:9200");
     assertEquals("reader", userOnly.username());
     assertEquals("", userOnly.password());
