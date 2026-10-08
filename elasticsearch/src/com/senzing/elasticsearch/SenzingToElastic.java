@@ -58,8 +58,8 @@ public class SenzingToElastic {
     // define Senzing connecting information
     String instanceName = "SenzingElasticSearch";
     boolean verboseLogging = false;
-    String SENZING_ENGINE_CONFIGURATION_JSON = System.getenv("SENZING_ENGINE_CONFIGURATION_JSON");
-    if (SENZING_ENGINE_CONFIGURATION_JSON == null) {
+    String engineConfigJson = System.getenv("SENZING_ENGINE_CONFIGURATION_JSON");
+    if (engineConfigJson == null || engineConfigJson.isBlank()) {
       System.err.println(
           "The environment variable SENZING_ENGINE_CONFIGURATION_JSON must be set with a proper JSON configuration.");
       System.err.println(
@@ -74,7 +74,7 @@ public class SenzingToElastic {
       System.out.println("Connecting to Senzing engine.");
       szEnvironment = SzCoreEnvironment.newBuilder()
           .instanceName(instanceName)
-          .settings(SENZING_ENGINE_CONFIGURATION_JSON)
+          .settings(engineConfigJson)
           .verboseLogging(verboseLogging)
           .build();
       SzEngine szEngine = szEnvironment.getEngine();

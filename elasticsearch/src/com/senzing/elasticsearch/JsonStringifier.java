@@ -1,23 +1,14 @@
 package com.senzing.elasticsearch;
 
-import java.io.StringReader;
-
 import jakarta.json.Json;
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
-import jakarta.json.JsonReader;
 import jakarta.json.JsonValue;
 
 // Converts every scalar value in a JSON document to a string, keeping the structure of
 // objects and arrays, so elasticsearch maps every field the same way.
 public class JsonStringifier {
-  public static String stringifyJson(String sourceJson) {
-    try (JsonReader jsonReader = Json.createReader(new StringReader(sourceJson))) {
-      return stringifyJson(jsonReader.readObject()).toString();
-    }
-  }
-
   public static JsonObject stringifyJson(JsonObject sourceJson) {
     return stringifyValue(sourceJson).asJsonObject();
   }

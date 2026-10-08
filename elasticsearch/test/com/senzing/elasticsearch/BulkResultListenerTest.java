@@ -15,9 +15,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.net.ConnectException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -77,14 +79,14 @@ class BulkResultListenerTest {
   }
 
   private static BulkRequest request(int operations) {
-    List<BulkOperation> ops = java.util.stream.IntStream.range(0, operations)
+    List<BulkOperation> ops = IntStream.range(0, operations)
         .mapToObj(i -> BulkOperation.of(o -> o.index(idx -> idx.index("senzing-index").document(Map.of("i", i)))))
         .toList();
     return BulkRequest.of(b -> b.operations(ops));
   }
 
   private static BulkResponse response(BulkResponseItem... items) {
-    boolean errors = java.util.Arrays.stream(items).anyMatch(item -> item.error() != null);
+    boolean errors = Arrays.stream(items).anyMatch(item -> item.error() != null);
     return BulkResponse.of(b -> b.errors(errors).took(1).items(List.of(items)));
   }
 
