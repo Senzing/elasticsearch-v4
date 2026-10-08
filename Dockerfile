@@ -38,7 +38,7 @@ FROM senzing_runtime
 
 ENV REFRESHED_AT=2026-10-02
 
-LABEL Name="senzing/elasticsearch" \
+LABEL Name="senzing/elasticsearch-v4" \
       Maintainer="support@senzing.com" \
       Version="2.0.0"
 

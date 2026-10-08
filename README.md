@@ -84,7 +84,7 @@ If the instructions are not clear, please let us know by opening a new
 
    ```console
    export GIT_ACCOUNT=senzing
-   export GIT_REPOSITORY=elasticsearch
+   export GIT_REPOSITORY=elasticsearch-v4
    export GIT_ACCOUNT_DIR=~/${GIT_ACCOUNT}.git
    export GIT_REPOSITORY_DIR="${GIT_ACCOUNT_DIR}/${GIT_REPOSITORY}"
    ```
@@ -92,7 +92,7 @@ If the instructions are not clear, please let us know by opening a new
 1. Clone the repository
    ```console
    cd ${GIT_ACCOUNT_DIR}
-   git clone https://github.com/Senzing/elasticsearch.git
+   git clone https://github.com/Senzing/elasticsearch-v4.git
    cd ${GIT_REPOSITORY_DIR}
    ```
 1. :thinking: Make sure the [SENZING_ENGINE_CONFIGURATION_JSON] environment variable is set to the Senzing installation that the data was loaded into earlier
@@ -109,7 +109,7 @@ If the instructions are not clear, please let us know by opening a new
 
    ```console
    cd {GIT_REPOSITORY_DIR}
-   sudo docker build -t senzing/elasticsearch .
+   sudo docker build -t senzing/elasticsearch-v4 .
    ```
 
 1. :thinking: Optional: to build the jar outside of Docker, a Senzing v4 SDK installation is required.
@@ -144,7 +144,7 @@ If the instructions are not clear, please let us know by opening a new
      -e SENZING_ENGINE_CONFIGURATION_JSON \
      --network=senzing-network \
      --volume ~/senzing/var/sqlite:/db \
-     senzing/elasticsearch
+     senzing/elasticsearch-v4
    ```
 
 #### Using an external Senzing database
@@ -176,7 +176,7 @@ If the instructions are not clear, please let us know by opening a new
       -e ELASTIC_INDEX_NAME \
       -e SENZING_ENGINE_CONFIGURATION_JSON \
       --network=senzing-network \
-      senzing/elasticsearch
+      senzing/elasticsearch-v4
     ```
 
 ### Search data
@@ -198,7 +198,7 @@ If the instructions are not clear, please let us know by opening a new
    <img width="246" alt="image" src="https://github.com/SamMacy/elasticsearch/assets/49598357/c77b8f8b-6877-4701-9677-511e5aafb81f">
 
 [Docker]: https://docs.docker.com/get-started/get-docker/
-[Documentation issue]: https://github.com/Senzing/elasticsearch/issues/new
+[Documentation issue]: https://github.com/Senzing/elasticsearch-v4/issues/new
 [Elasticsearch]: https://www.elastic.co/guide/en/elasticsearch/reference/current/install-elasticsearch.html
 [git]: https://git-scm.com/
 [Here]: https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-query-string-query#query-string-fuzziness
