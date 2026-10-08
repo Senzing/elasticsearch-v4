@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 import javax.net.ssl.SSLContext;
 
@@ -44,33 +45,47 @@ public class SenzingToElastic {
   public static void main(String[] args) {
     // The Elasticsearch client logs through SLF4J; only show its warnings and errors
     System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "warn");
-    System.exit(run());
+    System.exit(run(System::getenv, SenzingToElastic::createSzEnvironment));
   }
 
-  static int run() {
+  // Creates the Senzing environment from the engine configuration JSON
+  interface SzEnvironmentFactory {
+    SzEnvironment create(String engineConfigJson) throws SzException;
+  }
+
+  static SzEnvironment createSzEnvironment(String engineConfigJson) {
+    // define Senzing connecting information
+    String instanceName = "SenzingElasticSearch";
+    boolean verboseLogging = false;
+    return SzCoreEnvironment.newBuilder()
+        .instanceName(instanceName)
+        .settings(engineConfigJson)
+        .verboseLogging(verboseLogging)
+        .build();
+  }
+
+  // Reads its settings through env, so tests can supply their own
+  static int run(Function<String, String> env, SzEnvironmentFactory szEnvironmentFactory) {
     // define ElasticSearch index information
 
     // The full URL of the elasticsearch instance, including the scheme, port, and any credentials
     ElasticUrl elasticUrl;
     try {
-      elasticUrl = ElasticUrl.parse(System.getenv("ELASTIC_URL"));
+      elasticUrl = ElasticUrl.parse(env.apply("ELASTIC_URL"));
     } catch (IllegalArgumentException e) {
       System.err.println(e.getMessage());
       return 1;
     }
 
     // This value can be whatever you want, adhering to elasticsearch's index syntax
-    String indexName = System.getenv("ELASTIC_INDEX_NAME");
+    String indexName = env.apply("ELASTIC_INDEX_NAME");
     String elasticSearchIndexName = (indexName != null && !indexName.isBlank()) ? indexName : DEFAULT_INDEX_NAME;
 
     System.out.println("****Program started****");
     System.out.println("Initializing Senzing");
 
     // ****************************Creating Senzing environment********************
-    // define Senzing connecting information
-    String instanceName = "SenzingElasticSearch";
-    boolean verboseLogging = false;
-    String engineConfigJson = System.getenv("SENZING_ENGINE_CONFIGURATION_JSON");
+    String engineConfigJson = env.apply("SENZING_ENGINE_CONFIGURATION_JSON");
     if (engineConfigJson == null || engineConfigJson.isBlank()) {
       System.err.println(
           "The environment variable SENZING_ENGINE_CONFIGURATION_JSON must be set with a proper JSON configuration.");
@@ -84,11 +99,7 @@ public class SenzingToElastic {
     try {
       // Connect to the Senzing engine
       System.out.println("Connecting to Senzing engine.");
-      szEnvironment = SzCoreEnvironment.newBuilder()
-          .instanceName(instanceName)
-          .settings(engineConfigJson)
-          .verboseLogging(verboseLogging)
-          .build();
+      szEnvironment = szEnvironmentFactory.create(engineConfigJson);
       SzEngine szEngine = szEnvironment.getEngine();
 
       // ****************************Creating elasticsearch objects********************

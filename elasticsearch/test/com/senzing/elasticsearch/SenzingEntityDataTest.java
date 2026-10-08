@@ -92,6 +92,24 @@ class SenzingEntityDataTest {
   }
 
   @Test
+  void recordWithoutKeysIsListedWithTheKeysItHas() {
+    String entity = """
+        {"RESOLVED_ENTITY": {"ENTITY_ID": 4, "RECORDS": [
+          {"RECORD_ID": "1", "JSON_DATA": {"NAME_FULL": "Ann Lee"}},
+          {"DATA_SOURCE": "WATCHLIST", "JSON_DATA": {"NAME_FULL": "Bo Lee"}}
+        ]}}
+        """;
+    JsonObject document = parse(new SenzingEntityData(entity).getRecordData());
+    assertEquals(2, document.getJsonArray("JSON_DATA").size());
+    JsonObject first = document.getJsonArray("RECORDS").getJsonObject(0);
+    assertEquals("1", first.getString("RECORD_ID"));
+    assertFalse(first.containsKey("DATA_SOURCE"));
+    JsonObject second = document.getJsonArray("RECORDS").getJsonObject(1);
+    assertEquals("WATCHLIST", second.getString("DATA_SOURCE"));
+    assertFalse(second.containsKey("RECORD_ID"));
+  }
+
+  @Test
   void recordValuesAreIndexedAsStrings() {
     String entity = """
         {"RESOLVED_ENTITY": {"ENTITY_ID": 1, "RECORDS": [{

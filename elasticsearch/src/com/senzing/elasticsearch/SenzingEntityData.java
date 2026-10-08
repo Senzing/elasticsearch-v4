@@ -8,7 +8,6 @@ import jakarta.json.Json;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonNumber;
-import jakarta.json.JsonString;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.JsonReader;
@@ -50,16 +49,20 @@ public class SenzingEntityData {
         jsonDataArrayBuilder.add(recordJsonDataObject);
       }
 
-      JsonString dataSourceDataObject = recordObject.getJsonString("DATA_SOURCE");
-      JsonString recordIDDataObject = recordObject.getJsonString("RECORD_ID");
-      recordInfoList.add(new SenzingRecordInfo(dataSourceDataObject.getString(), recordIDDataObject.getString()));
+      // Senzing always includes these, but a missing one is left out rather than failing the export
+      recordInfoList.add(new SenzingRecordInfo(recordObject.getString("DATA_SOURCE", null),
+          recordObject.getString("RECORD_ID", null)));
     }
     outputBuilder.add("JSON_DATA", jsonDataArrayBuilder);
     JsonArrayBuilder recordArrayBuilder = Json.createArrayBuilder();
     for (SenzingRecordInfo recordInfo : recordInfoList) {
       JsonObjectBuilder recordInfoBuilder = Json.createObjectBuilder();
-      recordInfoBuilder.add("DATA_SOURCE", recordInfo.getDataSource());
-      recordInfoBuilder.add("RECORD_ID", recordInfo.getRecordID());
+      if (recordInfo.getDataSource() != null) {
+        recordInfoBuilder.add("DATA_SOURCE", recordInfo.getDataSource());
+      }
+      if (recordInfo.getRecordID() != null) {
+        recordInfoBuilder.add("RECORD_ID", recordInfo.getRecordID());
+      }
       recordArrayBuilder.add(recordInfoBuilder);
     }
     outputBuilder.add("RECORDS", recordArrayBuilder);

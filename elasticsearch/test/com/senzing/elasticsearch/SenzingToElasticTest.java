@@ -17,11 +17,9 @@ import com.senzing.sdk.SzException;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.lang.reflect.Proxy;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,8 +28,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
 
 class SenzingToElasticTest {
-  private static final long EXPORT_HANDLE = 99L;
-
   @Test
   void elasticUrlDefaultsToLocalhostWhenUnset() {
     assertEquals("http://localhost:9200", SenzingToElastic.ElasticUrl.parse(null).hostUrl());
@@ -112,7 +108,7 @@ class SenzingToElasticTest {
   @Test
   void exportEntitiesSendsEveryEntityAndClosesTheExport() throws SzException {
     AtomicBoolean closed = new AtomicBoolean();
-    SzEngine engine = fakeEngine(List.of(entity(1, "1001"), entity(2, "1002")), closed);
+    SzEngine engine = FakeSenzing.engine(List.of(FakeSenzing.entity(1, "1001"), FakeSenzing.entity(2, "1002")), closed);
 
     Map<Long, String> documents = new LinkedHashMap<>();
     long exported = SenzingToElastic.exportEntities(engine,
@@ -127,7 +123,7 @@ class SenzingToElasticTest {
   @Test
   void exportEntitiesHandlesAnEmptyExport() throws SzException {
     AtomicBoolean closed = new AtomicBoolean();
-    long exported = SenzingToElastic.exportEntities(fakeEngine(List.of(), closed),
+    long exported = SenzingToElastic.exportEntities(FakeSenzing.engine(List.of(), closed),
         (entityId, document) -> {
           throw new AssertionError("no entities expected");
         });
@@ -138,7 +134,7 @@ class SenzingToElasticTest {
   @Test
   void exportEntitiesClosesTheExportWhenTheSinkFails() {
     AtomicBoolean closed = new AtomicBoolean();
-    SzEngine engine = fakeEngine(List.of(entity(1, "1001")), closed);
+    SzEngine engine = FakeSenzing.engine(List.of(FakeSenzing.entity(1, "1001")), closed);
     assertThrows(IllegalStateException.class, () -> SenzingToElastic.exportEntities(engine,
         (entityId, document) -> {
           throw new IllegalStateException("ingester closed");
@@ -156,11 +152,6 @@ class SenzingToElasticTest {
     assertEquals(document, operation.index().document());
   }
 
-  private static String entity(long entityId, String recordId) {
-    return "{\"RESOLVED_ENTITY\": {\"ENTITY_ID\": " + entityId + ", \"RECORDS\": [{\"DATA_SOURCE\": \"CUSTOMERS\", "
-        + "\"RECORD_ID\": \"" + recordId + "\", \"JSON_DATA\": {\"RECORD_ID\": \"" + recordId + "\"}}]}}";
-  }
-
   private static String toString(BinaryData document) {
     try {
       ByteBuffer buffer = document.asByteBuffer();
@@ -170,24 +161,5 @@ class SenzingToElasticTest {
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
-  }
-
-  // A stand-in SzEngine that serves the given entities from a single export handle.
-  private static SzEngine fakeEngine(List<String> entities, AtomicBoolean closed) {
-    Iterator<String> remaining = entities.iterator();
-    return (SzEngine) Proxy.newProxyInstance(SzEngine.class.getClassLoader(), new Class<?>[] { SzEngine.class },
-        (proxy, method, args) -> switch (method.getName()) {
-          case "exportJsonEntityReport" -> EXPORT_HANDLE;
-          case "fetchNext" -> {
-            assertEquals(EXPORT_HANDLE, args[0]);
-            yield remaining.hasNext() ? remaining.next() : null;
-          }
-          case "closeExportReport" -> {
-            assertEquals(EXPORT_HANDLE, args[0]);
-            closed.set(true);
-            yield null;
-          }
-          default -> throw new UnsupportedOperationException(method.getName());
-        });
   }
 }

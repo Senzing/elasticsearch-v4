@@ -34,7 +34,8 @@
         <version>3.6.0</version>
       </plugin>
 
-      <!-- Measures unit test coverage; the report is written to target/site/jacoco -->
+      <!-- Measures unit test coverage; the report is written to target/site/jacoco, and the
+           build fails if fewer than 80% of the lines are covered -->
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
@@ -51,6 +52,27 @@
             <goals>
               <goal>report</goal>
             </goals>
+          </execution>
+          <execution>
+            <id>check</id>
+            <phase>test</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <rule>
+                  <element>BUNDLE</element>
+                  <limits>
+                    <limit>
+                      <counter>LINE</counter>
+                      <value>COVEREDRATIO</value>
+                      <minimum>0.80</minimum>
+                    </limit>
+                  </limits>
+                </rule>
+              </rules>
+            </configuration>
           </execution>
         </executions>
       </plugin>

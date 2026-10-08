@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.0] - 2026-10-02
+## [2.0.0] - 2026-10-08
 
 ### changed in 2.0.0
 
@@ -27,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Exits with a non-zero status if any entity fails to index, or if elasticsearch doesn't report on every entity
 - Errors are written to standard error; indexing failures report the entity ID and error type, not the error reason
 - Elasticsearch client warnings and errors are logged instead of discarded
-- Added unit tests and JaCoCo coverage reporting
+- Added unit tests, and JaCoCo coverage reporting that fails the build below 80% line coverage
 - Removed the unused `JsonFieldValueFinder` class and identifier helper methods
 - docker-compose uses the official `postgres` image and `senzing/init-database`
 - docker-compose names the default database `senzing` instead of `G2` and stores it in a named volume
