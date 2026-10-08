@@ -27,7 +27,7 @@ If the instructions are not clear, please let us know by opening a new
 
 ### Expectations
 
-- **Space:** This repository and demonstration require X GB free disk space.
+- **Space:** The Docker images for this demonstration need about 8 GB of free disk space (elasticsearch, kibana, and building this image), plus about 2 GB if you use `elasticsearch/docker-compose.yaml` for the Senzing database.
 - **Time:** Budget 30 minutes to get the demonstration up-and-running, depending on CPU and network speeds.
 - **Background knowledge:** This repository assumes a working knowledge of:
 
@@ -113,6 +113,7 @@ For more options, see [Install Elasticsearch with Docker] and [Install Kibana wi
 
    :warning: If elasticsearch has security enabled, put the username and password in the URL, for example `https://elastic:password@senzing-elasticsearch:9200`.
    Percent-encode any special characters in them, for example `@` as `%40`.
+   A hostname with an underscore, such as a Docker container named `senzing_es`, works with `http` but not `https`: elasticsearch rejects the TLS connection because underscores aren't allowed in TLS server names.
    For `https`, the elasticsearch certificate must be trusted by Java.
    For a self-signed certificate, add its CA to a truststore, mount the truststore into the container, and point Java at it. For example, add these options to the `docker run` commands below:
 
@@ -212,7 +213,7 @@ To start clean, delete the index before running the indexer.
 
 1. Navigate to the discover tab
 
-   <img width="200" alt="image" src="https://github.com/Senzing/elasticsearch/assets/49598357/b7663a5b-b940-4ca6-b3b6-dc0250a5f3ba">
+   <img width="200" alt="Kibana menu with Discover under Analytics" src="docs/images/kibana-discover.png">
 
 1. Create Index.
 
@@ -225,12 +226,12 @@ To start clean, delete the index before running the indexer.
 
 [Docker]: https://docs.docker.com/get-started/get-docker/
 [Documentation issue]: https://github.com/Senzing/elasticsearch-v4/issues/new
-[Elasticsearch]: https://www.elastic.co/guide/en/elasticsearch/reference/current/install-elasticsearch.html
+[Elasticsearch]: https://www.elastic.co/docs/deploy-manage/deploy/self-managed/installing-elasticsearch
 [git]: https://git-scm.com/
 [Install Elasticsearch with Docker]: https://www.elastic.co/docs/deploy-manage/deploy/self-managed/install-elasticsearch-with-docker
 [Install Kibana with Docker]: https://www.elastic.co/docs/deploy-manage/deploy/self-managed/install-kibana-with-docker
 [java]: https://adoptium.net/
-[kibana]: https://www.elastic.co/guide/en/kibana/current/install.html
+[kibana]: https://www.elastic.co/docs/deploy-manage/deploy/self-managed/install-kibana
 [localhost:5601]: http://localhost:5601
 [lucene query string syntax]: https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-query-string-query#query-string-fuzziness
 [maven]: https://maven.apache.org/

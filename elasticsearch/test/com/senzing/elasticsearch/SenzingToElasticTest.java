@@ -2,10 +2,12 @@ package com.senzing.elasticsearch;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
 import co.elastic.clients.util.BinaryData;
 import co.elastic.clients.util.ContentType;
@@ -32,31 +34,60 @@ class SenzingToElasticTest {
 
   @Test
   void elasticUrlDefaultsToLocalhostWhenUnset() {
-    assertEquals("http://localhost:9200", SenzingToElastic.ElasticUrl.parse(null).host().toString());
-    assertEquals("http://localhost:9200", SenzingToElastic.ElasticUrl.parse(" ").host().toString());
+    assertEquals("http://localhost:9200", SenzingToElastic.ElasticUrl.parse(null).hostUrl());
+    assertEquals("http://localhost:9200", SenzingToElastic.ElasticUrl.parse(" ").hostUrl());
   }
 
   @Test
   void elasticUrlAcceptsHttpAndHttps() {
     SenzingToElastic.ElasticUrl url = SenzingToElastic.ElasticUrl.parse("http://senzing-elasticsearch:9200");
-    assertEquals("http://senzing-elasticsearch:9200", url.host().toString());
+    assertEquals("http://senzing-elasticsearch:9200", url.hostUrl());
     assertNull(url.username());
     assertNull(url.password());
 
-    assertEquals("https://es.example.com", SenzingToElastic.ElasticUrl.parse("https://es.example.com").host().toString());
+    assertEquals("https://es.example.com", SenzingToElastic.ElasticUrl.parse("https://es.example.com").hostUrl());
     assertEquals("https://es.example.com:443/prefix",
-        SenzingToElastic.ElasticUrl.parse(" HTTPS://es.example.com:443/prefix ").host().toString());
+        SenzingToElastic.ElasticUrl.parse(" HTTPS://es.example.com:443/prefix ").hostUrl());
+  }
+
+  @Test
+  void elasticUrlAcceptsHostnamesWithUnderscores() {
+    SenzingToElastic.ElasticUrl url = SenzingToElastic.ElasticUrl.parse("http://senzing_es:9200");
+    assertEquals("http://senzing_es:9200", url.hostUrl());
+    assertNull(url.username());
+
+    SenzingToElastic.ElasticUrl withCredentials = SenzingToElastic.ElasticUrl.parse(
+        "https://elastic:p%40ss:word@my_es.example.com/prefix");
+    assertEquals("https://my_es.example.com/prefix", withCredentials.hostUrl());
+    assertEquals("elastic", withCredentials.username());
+    assertEquals("p@ss:word", withCredentials.password());
+  }
+
+  @Test
+  void createClientAcceptsAnyValidHostname() throws Exception {
+    for (String url : List.of("http://senzing_es:9200", "https://elastic:secret@my_es.example.com/prefix",
+        "http://senzing-elasticsearch:9200", "http://[::1]:9200")) {
+      try (ElasticsearchClient client = SenzingToElastic.createClient(SenzingToElastic.ElasticUrl.parse(url))) {
+        assertNotNull(client, url);
+      }
+    }
+  }
+
+  @Test
+  void elasticUrlAcceptsIpAddresses() {
+    assertEquals("http://127.0.0.1:9200", SenzingToElastic.ElasticUrl.parse("http://127.0.0.1:9200").hostUrl());
+    assertEquals("http://[::1]:9200", SenzingToElastic.ElasticUrl.parse("http://[::1]:9200").hostUrl());
   }
 
   @Test
   void elasticUrlSeparatesCredentials() {
     SenzingToElastic.ElasticUrl url = SenzingToElastic.ElasticUrl.parse("https://elastic:p%40ss:word@es.example.com:9200");
-    assertEquals("https://es.example.com:9200", url.host().toString());
+    assertEquals("https://es.example.com:9200", url.hostUrl());
     assertEquals("elastic", url.username());
     assertEquals("p@ss:word", url.password());
 
     SenzingToElastic.ElasticUrl encoded = SenzingToElastic.ElasticUrl.parse("http://us%3Aer:a+b%2Fc@localhost:9200");
-    assertEquals("http://localhost:9200", encoded.host().toString());
+    assertEquals("http://localhost:9200", encoded.hostUrl());
     assertEquals("us:er", encoded.username());
     assertEquals("a+b/c", encoded.password());
 
@@ -68,7 +99,7 @@ class SenzingToElasticTest {
   @Test
   void elasticUrlRejectsInvalidValuesWithoutEchoingThem() {
     for (String value : List.of("senzing-elasticsearch:9200", "ftp://localhost:9200", "http://", "not a url",
-        "localhost")) {
+        "localhost", "http://senzing_es:port", "http://senzing_es:70000", "http://bad_host!:9200", "http://:9200")) {
       IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
           () -> SenzingToElastic.ElasticUrl.parse(value), value);
       assertTrue(e.getMessage().startsWith("The environment variable ELASTIC_URL must be"), value);

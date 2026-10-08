@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renamed the repository to `elasticsearch-v4` and the Docker image to `senzing/elasticsearch-v4`
 - Renamed the Java package to `com.senzing.elasticsearch`, the main class to `SenzingToElastic`, and the jar to `elasticsearch-v4.jar`
 - `ELASTIC_URL` replaces `ELASTIC_HOSTNAME` and `ELASTIC_PORT`; it takes the full URL, so `https` and credentials in the URL are supported
+- `ELASTIC_URL` accepts hostnames with underscores, such as Docker container names, over `http`
 - Docker image is now a multi-stage build
 - Removed `postgresql-client` from the Docker image
 - The default Elasticsearch index name is now `senzing-index` instead of `g2index`

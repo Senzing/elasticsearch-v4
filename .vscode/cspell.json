@@ -21,6 +21,7 @@
     "Dversion",
     "DYLD",
     "healthcheck",
+    "hostnames",
     "ICLA",
     "ingester",
     "initdatabase",

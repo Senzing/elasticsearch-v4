@@ -16,7 +16,7 @@ There are a number of ways you can contribute:
 
 If your contribution modifies the git repository, the following agreements must be established.
 
-*Note:*  License agreements are only needed for adding, modifying, and deleting artifacts kept within the repository.
+_Note:_ License agreements are only needed for adding, modifying, and deleting artifacts kept within the repository.
 In simple terms, license agreements are needed before pull requests can be accepted.
 A license agreement is not needed for submitting feature request, bug reporting, or other project management.
 
@@ -41,16 +41,13 @@ The license agreement for this repository is stated in the
 
 Please do not use the GitHub issue tracker to submit questions.
 
-TODO: Instead, use ???
-
-1. ??? Slack ???
-1. ??? stackoverflow.com ???
+Instead, email <support@senzing.com>.
 
 ## Feature Requests
 
 All feature requests are "GitHub issues".
 To request a feature, create a
-[GitHub issue](https://help.github.com/articles/creating-an-issue/)
+[GitHub issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/creating-an-issue)
 in this repository.
 
 When creating an issue, there will be a choice to create a "Bug report" or a "Feature request".
@@ -62,7 +59,7 @@ All bug reports are "GitHub issues".
 Before reporting on a bug, check to see if it has
 [already been reported](https://github.com/search?q=+is%3Aissue+user%3Asenzing).
 To report a bug, create a
-[GitHub issue](https://help.github.com/articles/creating-an-issue/)
+[GitHub issue](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/creating-an-issue)
 in this repository.
 
 When creating an issue, there will be a choice to create a "Bug report" or a "Feature request".
@@ -107,18 +104,25 @@ cd ${GIT_REPOSITORY_DIR}
 
 ### Coding conventions
 
-TODO:
+- Java uses 2-space indentation.
+- Markdown, YAML, and JSON files are formatted with [Prettier].
+- Words that the spell checker doesn't know go in `.vscode/cspell.json`.
 
 ### Testing
 
-TODO:
+`mvn clean package` in the `elasticsearch` directory runs the unit tests,
+and writes a coverage report to `elasticsearch/target/site/jacoco`.
+Building the Docker image also runs them.
+The README's demonstration is the end-to-end test.
 
 ### Pull Requests
 
 Code in the main branch is modified via GitHub pull request.
 Follow GitHub's
-[Creating a pull request from a branch](https://help.github.com/articles/creating-a-pull-request/)
+[Creating a pull request from a branch](https://docs.github.com/en/pull-requests/how-tos/create-pull-requests/creating-a-pull-request)
 or
-[Creating a pull request from a fork](https://help.github.com/articles/creating-a-pull-request-from-a-fork/) instructions.
+[Creating a pull request from a fork](https://docs.github.com/en/pull-requests/how-tos/create-pull-requests/creating-a-pull-request-from-a-fork) instructions.
 
 Accepting pull requests will be at the discretion of Senzing, Inc. and the repository owner(s).
+
+[Prettier]: https://prettier.io/

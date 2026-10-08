@@ -6,6 +6,10 @@ import static com.senzing.sdk.SzFlag.SZ_EXPORT_INCLUDE_ALL_ENTITIES;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._helpers.bulk.BulkIngester;
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
+import co.elastic.clients.json.jackson.JacksonJsonpMapper;
+import co.elastic.clients.transport.rest5_client.Rest5ClientTransport;
+import co.elastic.clients.transport.rest5_client.low_level.Rest5Client;
+import co.elastic.clients.transport.rest5_client.low_level.Rest5ClientBuilder;
 import co.elastic.clients.util.BinaryData;
 import co.elastic.clients.util.ContentType;
 
@@ -19,11 +23,19 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
+
+import javax.net.ssl.SSLContext;
+
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.http.message.BasicHeader;
 
 public class SenzingToElastic {
   static final String DEFAULT_ELASTIC_URL = "http://localhost:9200";
@@ -85,13 +97,7 @@ public class SenzingToElastic {
       AtomicLong failedCount = new AtomicLong();
       long exportedCount;
 
-      try (ElasticsearchClient esClient = ElasticsearchClient.of(b -> {
-        b.host(elasticUrl.host());
-        if (elasticUrl.username() != null) {
-          b.usernameAndPassword(elasticUrl.username(), elasticUrl.password());
-        }
-        return b;
-      });
+      try (ElasticsearchClient esClient = createClient(elasticUrl);
           BulkIngester<Long> ingester = BulkIngester.of(b -> b
               .client(esClient)
               .maxOperations(25) // This setting changes how many documents get sent at a times
@@ -173,8 +179,36 @@ public class SenzingToElastic {
             .document(document)));
   }
 
-  // The elasticsearch URL split into the host URL and any credentials it carried.
-  record ElasticUrl(URI host, String username, String password) {
+  // Builds the client from the URL's parts rather than from a java.net.URI, because the client
+  // reads the host with URI.getHost(), which is null for hostnames such as "senzing_es".
+  static ElasticsearchClient createClient(ElasticUrl elasticUrl) throws NoSuchAlgorithmException {
+    // HttpHost takes an IPv6 address without the brackets the URL needs
+    String hostName = elasticUrl.hostName().replaceAll("^\\[(.*)\\]$", "$1");
+    Rest5ClientBuilder restClientBuilder = Rest5Client.builder(
+        new HttpHost(elasticUrl.scheme(), hostName, elasticUrl.port()));
+    if (!elasticUrl.path().isEmpty() && !elasticUrl.path().equals("/")) {
+      restClientBuilder.setPathPrefix(elasticUrl.path());
+    }
+    if (elasticUrl.username() != null) {
+      String credentials = elasticUrl.username() + ":" + elasticUrl.password();
+      restClientBuilder.setDefaultHeaders(new Header[] { new BasicHeader("Authorization",
+          "Basic " + Base64.getEncoder().encodeToString(credentials.getBytes(StandardCharsets.UTF_8))) });
+    }
+    if (elasticUrl.scheme().equals("https")) {
+      // The JVM's default context honors -Djavax.net.ssl.trustStore
+      restClientBuilder.setSSLContext(SSLContext.getDefault());
+    }
+    return new ElasticsearchClient(new Rest5ClientTransport(restClientBuilder.build(), new JacksonJsonpMapper()));
+  }
+
+  // The parts of the elasticsearch URL: the scheme, host, port (-1 for the scheme's default),
+  // path, and any credentials.
+  record ElasticUrl(String scheme, String hostName, int port, String path, String username, String password) {
+    // The URL without credentials, safe to print
+    String hostUrl() {
+      return scheme + "://" + hostName + ((port < 0) ? "" : ":" + port) + path;
+    }
+
     static ElasticUrl parse(String value) {
       if (value == null || value.isBlank()) {
         value = DEFAULT_ELASTIC_URL;
@@ -191,26 +225,46 @@ public class SenzingToElastic {
       }
       String scheme = uri.getScheme();
       if (scheme == null || !(scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https"))
-          || uri.getHost() == null) {
+          || uri.getRawAuthority() == null) {
         throw new IllegalArgumentException(usage);
+      }
+
+      String hostName = uri.getHost();
+      int port = uri.getPort();
+      String userInfo = uri.getRawUserInfo();
+      if (hostName == null) {
+        // Java's URI parser rejects some valid hostnames, such as Docker container names with
+        // underscores, so split the authority into user info, host, and port here instead
+        String authority = uri.getRawAuthority();
+        int at = authority.lastIndexOf('@');
+        userInfo = (at < 0) ? null : authority.substring(0, at);
+        String hostAndPort = authority.substring(at + 1);
+        int colon = hostAndPort.lastIndexOf(':');
+        hostName = (colon < 0) ? hostAndPort : hostAndPort.substring(0, colon);
+        if (colon >= 0) {
+          try {
+            port = Integer.parseInt(hostAndPort.substring(colon + 1));
+          } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(usage);
+          }
+        }
+        if (!hostName.matches("[A-Za-z0-9._-]+") || port < -1 || port > 65535) {
+          throw new IllegalArgumentException(usage);
+        }
       }
 
       String username = null;
       String password = null;
       // Split before decoding, so a percent-encoded ':' stays part of the username or password
-      String userInfo = uri.getRawUserInfo();
       if (userInfo != null) {
         int colon = userInfo.indexOf(':');
         username = decode((colon < 0) ? userInfo : userInfo.substring(0, colon));
         password = decode((colon < 0) ? "" : userInfo.substring(colon + 1));
       }
 
-      try {
-        URI host = new URI(scheme.toLowerCase(), null, uri.getHost(), uri.getPort(), uri.getPath(), null, null);
-        return new ElasticUrl(host, username, password);
-      } catch (URISyntaxException e) {
-        throw new IllegalArgumentException(usage);
-      }
+      // The query and fragment aren't used
+      String path = (uri.getRawPath() == null) ? "" : uri.getRawPath();
+      return new ElasticUrl(scheme.toLowerCase(), hostName, port, path, username, password);
     }
 
     // Percent-decodes a URL component; unlike form encoding, '+' is a literal plus sign
