@@ -3,82 +3,37 @@ package com.senzing.elasticsearch;
 import java.io.StringReader;
 
 import jakarta.json.Json;
-import jakarta.json.JsonArray;
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.JsonReader;
 import jakarta.json.JsonValue;
-import jakarta.json.JsonValue.ValueType;
 
+// Converts every scalar value in a JSON document to a string, keeping the structure of
+// objects and arrays, so elasticsearch maps every field the same way.
 public class JsonStringifier {
   public static String stringifyJson(String sourceJson) {
-    StringReader sr = new StringReader(sourceJson);
-    JsonReader jsonReader = Json.createReader(sr);
-    JsonObject jsonObject = jsonReader.readObject();
-    JsonObject alteredObject = stringifyJson(jsonObject);
-    return alteredObject.toString();
-  }
-
-  public static JsonObject stringifyJson(JsonObject sourceJson) {
-    JsonObjectBuilder objBuilder = Json.createObjectBuilder();
-    sourceJson.entrySet().stream().forEach((entry) -> {
-      String key = entry.getKey();
-      JsonValue value = entry.getValue();
-      buildStringifiedValue(key, value, objBuilder);
-    });
-    return objBuilder.build();
-  }
-
-  private static void buildStringifiedValue(String sourceKey, JsonValue sourceValue, JsonArrayBuilder outputBuilder) {
-    ValueType valueType = sourceValue.getValueType();
-    switch (valueType) {
-      case ARRAY:
-        JsonArray sourceArray = sourceValue.asJsonArray();
-        JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
-        sourceArray.stream().forEach((entry) -> {
-          buildStringifiedValue(sourceKey, entry, arrayBuilder);
-        });
-        outputBuilder.add(arrayBuilder);
-        break;
-      case OBJECT:
-        JsonObject sourceObject = sourceValue.asJsonObject();
-        JsonObjectBuilder objectBuilder = Json.createObjectBuilder();
-        sourceObject.entrySet().stream().forEach((entry) -> {
-          String key = entry.getKey();
-          JsonValue value = entry.getValue();
-          buildStringifiedValue(key, value, objectBuilder);
-        });
-        outputBuilder.add(objectBuilder);
-        break;
-      default:
-        outputBuilder.add(Utils.getSimpleRawValue(sourceValue));
+    try (JsonReader jsonReader = Json.createReader(new StringReader(sourceJson))) {
+      return stringifyJson(jsonReader.readObject()).toString();
     }
   }
 
-  private static void buildStringifiedValue(String sourceKey, JsonValue sourceValue, JsonObjectBuilder outputBuilder) {
-    ValueType valueType = sourceValue.getValueType();
-    switch (valueType) {
+  public static JsonObject stringifyJson(JsonObject sourceJson) {
+    return stringifyValue(sourceJson).asJsonObject();
+  }
+
+  private static JsonValue stringifyValue(JsonValue sourceValue) {
+    switch (sourceValue.getValueType()) {
       case ARRAY:
-        JsonArray sourceArray = sourceValue.asJsonArray();
         JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
-        sourceArray.stream().forEach((entry) -> {
-          buildStringifiedValue(sourceKey, entry, arrayBuilder);
-        });
-        outputBuilder.add(sourceKey, arrayBuilder);
-        break;
+        sourceValue.asJsonArray().forEach(entry -> arrayBuilder.add(stringifyValue(entry)));
+        return arrayBuilder.build();
       case OBJECT:
-        JsonObject sourceObject = sourceValue.asJsonObject();
         JsonObjectBuilder objectBuilder = Json.createObjectBuilder();
-        sourceObject.entrySet().stream().forEach((entry) -> {
-          String key = entry.getKey();
-          JsonValue value = entry.getValue();
-          buildStringifiedValue(key, value, objectBuilder);
-        });
-        outputBuilder.add(sourceKey, objectBuilder);
-        break;
+        sourceValue.asJsonObject().forEach((key, value) -> objectBuilder.add(key, stringifyValue(value)));
+        return objectBuilder.build();
       default:
-        outputBuilder.add(sourceKey, Utils.getSimpleRawValue(sourceValue));
+        return Json.createValue(Utils.getSimpleRawValue(sourceValue));
     }
   }
 }

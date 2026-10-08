@@ -154,6 +154,10 @@ For more options, see [Install Elasticsearch with Docker] and [Install Kibana wi
 
 ### Run the indexer
 
+Each entity is indexed with its Senzing entity ID as the document `_id`, so running the indexer again replaces each entity's document instead of adding a duplicate.
+Documents are never deleted, so if an entity no longer exists (for example, because it was merged into another entity), its old document stays in the index.
+To start clean, delete the index before running the indexer.
+
 #### Using a local sqlite Senzing database
 
 1. We will mount the sqlite database; make sure the `CONNECTION` string in our config json points to where it is mounted. In this example the `CONNECTION` will need to point towards the `/db` dir. We also need to run the container as part of the network that the ELK-stack is running in. Example:

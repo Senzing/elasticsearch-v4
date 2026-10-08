@@ -18,22 +18,11 @@ public class Utils {
     return resultDoc;
   }
 
+  // Returns a string's value without quotes, and any other value as its JSON text
   public static String getSimpleRawValue(JsonValue sourceValue) {
-    ValueType valueType = sourceValue.getValueType();
-    String result;
-    switch (valueType) {
-      case STRING:
-        result = ((JsonString) sourceValue).getString();
-        break;
-      case ARRAY:
-      case OBJECT:
-      case NUMBER:
-      case TRUE:
-      case FALSE:
-      case NULL:
-      default:
-        result = sourceValue.toString();
+    if (sourceValue.getValueType() == ValueType.STRING) {
+      return ((JsonString) sourceValue).getString();
     }
-    return result;
+    return sourceValue.toString();
   }
 }

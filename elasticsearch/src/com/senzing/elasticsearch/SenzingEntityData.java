@@ -24,9 +24,10 @@ public class SenzingEntityData {
 
   public SenzingEntityData(String resolvedEntityDataString) {
     // This function parses a resolved entity document, and retrieves the necessary data.
-    StringReader sr = new StringReader(resolvedEntityDataString);
-    JsonReader jsonReader = Json.createReader(sr);
-    JsonObject jsonObject = jsonReader.readObject();
+    JsonObject jsonObject;
+    try (JsonReader jsonReader = Json.createReader(new StringReader(resolvedEntityDataString))) {
+      jsonObject = jsonReader.readObject();
+    }
     JsonObject resEntObject = jsonObject.getJsonObject("RESOLVED_ENTITY");
 
     // get the entity ID
@@ -43,8 +44,11 @@ public class SenzingEntityData {
     List<SenzingRecordInfo> recordInfoList = new LinkedList<SenzingRecordInfo>();
     for (int i = 0; i < numRecordsInArray; i++) {
       JsonObject recordObject = recordsArray.getJsonObject(i);
+      // A record without JSON_DATA is still listed in RECORDS, it just has no data to search
       JsonObject recordJsonDataObject = recordObject.getJsonObject("JSON_DATA");
-      jsonDataArrayBuilder.add(i, recordJsonDataObject);
+      if (recordJsonDataObject != null) {
+        jsonDataArrayBuilder.add(recordJsonDataObject);
+      }
 
       JsonString dataSourceDataObject = recordObject.getJsonString("DATA_SOURCE");
       JsonString recordIDDataObject = recordObject.getJsonString("RECORD_ID");
@@ -70,9 +74,5 @@ public class SenzingEntityData {
 
   public Long getEntityID() {
     return m_resolvedEntityID;
-  }
-
-  public String getElasticSearchEntityIdentifier() {
-    return ("{\"ENTITY_ID\":\"" + m_resolvedEntityID + "\"}");
   }
 }

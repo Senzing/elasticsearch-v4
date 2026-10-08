@@ -45,7 +45,6 @@ class SenzingEntityDataTest {
   void readsEntityId() {
     SenzingEntityData entityData = new SenzingEntityData(ENTITY);
     assertEquals(42L, entityData.getEntityID());
-    assertEquals("{\"ENTITY_ID\":\"42\"}", entityData.getElasticSearchEntityIdentifier());
   }
 
   @Test
@@ -75,6 +74,21 @@ class SenzingEntityDataTest {
     JsonObject document = parse(entityData.getRecordData());
     assertEquals(0, document.getJsonArray("JSON_DATA").size());
     assertEquals(0, document.getJsonArray("RECORDS").size());
+  }
+
+  @Test
+  void recordWithoutJsonDataIsStillListed() {
+    String entity = """
+        {"RESOLVED_ENTITY": {"ENTITY_ID": 3, "RECORDS": [
+          {"DATA_SOURCE": "CUSTOMERS", "RECORD_ID": "1", "JSON_DATA": {"NAME_FULL": "Ann Lee"}},
+          {"DATA_SOURCE": "WATCHLIST", "RECORD_ID": "W9"}
+        ]}}
+        """;
+    JsonObject document = parse(new SenzingEntityData(entity).getRecordData());
+    assertEquals(1, document.getJsonArray("JSON_DATA").size());
+    assertEquals("Ann Lee", document.getJsonArray("JSON_DATA").getJsonObject(0).getString("NAME_FULL"));
+    assertEquals(2, document.getJsonArray("RECORDS").size());
+    assertEquals("W9", document.getJsonArray("RECORDS").getJsonObject(1).getString("RECORD_ID"));
   }
 
   @Test

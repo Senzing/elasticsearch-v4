@@ -6,7 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
 import co.elastic.clients.util.BinaryData;
+import co.elastic.clients.util.ContentType;
 
 import com.senzing.sdk.SzEngine;
 import com.senzing.sdk.SzException;
@@ -111,6 +113,16 @@ class SenzingToElasticTest {
           throw new IllegalStateException("ingester closed");
         }));
     assertTrue(closed.get());
+  }
+
+  @Test
+  void indexOperationUsesTheEntityIdAsTheDocumentId() {
+    BinaryData document = BinaryData.of("{}".getBytes(StandardCharsets.UTF_8), ContentType.APPLICATION_JSON);
+    BulkOperation operation = SenzingToElastic.indexOperation("senzing-index", 42L, document);
+    assertTrue(operation.isIndex());
+    assertEquals("senzing-index", operation.index().index());
+    assertEquals("42", operation.index().id());
+    assertEquals(document, operation.index().document());
   }
 
   private static String entity(long entityId, String recordId) {

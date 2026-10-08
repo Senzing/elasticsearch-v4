@@ -5,6 +5,7 @@ import static com.senzing.sdk.SzFlag.SZ_EXPORT_INCLUDE_ALL_ENTITIES;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._helpers.bulk.BulkIngester;
+import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
 import co.elastic.clients.util.BinaryData;
 import co.elastic.clients.util.ContentType;
 
@@ -99,11 +100,8 @@ public class SenzingToElastic {
 
         System.out.println("Indexing entities");
         // This ingester does bulk indexes; the entity ID rides along so failures can be reported
-        exportedCount = exportEntities(szEngine, (entityId, document) -> ingester.add(op -> op
-            .index(idx -> idx
-                .index(elasticSearchIndexName)
-                .document(document)),
-            entityId));
+        exportedCount = exportEntities(szEngine, (entityId, document) -> ingester.add(
+            indexOperation(elasticSearchIndexName, entityId, document), entityId));
       }
       System.out.println("Finished indexing: " + indexedCount.get() + " entities indexed, "
           + failedCount.get() + " failed");
@@ -163,6 +161,16 @@ public class SenzingToElastic {
       szEngine.closeExportReport(exportHandle);
     }
     return exportedCount;
+  }
+
+  // Indexes the document under its Senzing entity ID, so re-running the indexer replaces each
+  // entity's document instead of adding a duplicate.
+  static BulkOperation indexOperation(String indexName, long entityId, BinaryData document) {
+    return BulkOperation.of(op -> op
+        .index(idx -> idx
+            .index(indexName)
+            .id(String.valueOf(entityId))
+            .document(document)));
   }
 
   // The elasticsearch URL split into the host URL and any credentials it carried.
