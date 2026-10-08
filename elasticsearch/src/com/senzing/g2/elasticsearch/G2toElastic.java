@@ -34,20 +34,22 @@ public class G2toElastic {
                                                                                 // instance
 
     String portNum = System.getenv("ELASTIC_PORT");
-    int elasticSearchPortNumber = (portNum != null) ? Integer.parseInt(portNum) : 9200;// the exposed port for
-                                                                                       // elasticsearch
+    Integer elasticSearchPortNumber = parsePort(portNum); // the exposed port for elasticsearch
+    if (elasticSearchPortNumber == null) {
+      System.out.println("The environment variable ELASTIC_PORT must be a port number from 1 to 65535, not: " + portNum);
+      System.exit(1);
+    }
 
     String indexName = System.getenv("ELASTIC_INDEX_NAME");
-    String elasticSearchIndexName = (indexName != null) ? indexName : "g2index"; // This value can be whatever you want,
-                                                                                 // adhering to elasticsearch's index
-                                                                                 // syntax
+    // This value can be whatever you want, adhering to elasticsearch's index syntax
+    String elasticSearchIndexName = (indexName != null && !indexName.isBlank()) ? indexName : "senzing-index";
 
     System.out.println("****Program started****");
     System.out.println("Initializing Senzing");
 
     // ****************************Creating Senzing environment********************
     // define Senzing connecting information
-    String instanceName = "G2ElasticSearch";
+    String instanceName = "SenzingElasticSearch";
     boolean verboseLogging = false;
     String SENZING_ENGINE_CONFIGURATION_JSON = System.getenv("SENZING_ENGINE_CONFIGURATION_JSON");
     if (SENZING_ENGINE_CONFIGURATION_JSON == null) {
@@ -130,6 +132,19 @@ public class G2toElastic {
     }
     System.out.println("****Program complete****");
     System.exit(0);
+  }
+
+  // Returns the Elasticsearch port, 9200 when unset, or null when the value isn't a valid port.
+  static Integer parsePort(String portNum) {
+    if (portNum == null || portNum.isBlank()) {
+      return 9200;
+    }
+    try {
+      int port = Integer.parseInt(portNum.trim());
+      return (port >= 1 && port <= 65535) ? port : null;
+    } catch (NumberFormatException e) {
+      return null;
+    }
   }
 
   // Counts documents that were and weren't indexed so failures don't pass silently.

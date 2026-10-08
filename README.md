@@ -196,7 +196,6 @@ If the instructions are not clear, please let us know by opening a new
    - The indexed entities have no timestamp, so for `Timestamp field` select "--- I don't want to use the time filter ---".
 
 4. Press "Save data view to Kibana" at the bottom of the screen. You can now view the created index and do searches. If fuzzy searches are needed click on the menu button to the left of the search bar, choose "Language" and switch the language to lucene. [Here] you can view the lucene syntax and how to do fuzzy searches
-   <img width="246" alt="image" src="https://github.com/SamMacy/elasticsearch/assets/49598357/c77b8f8b-6877-4701-9677-511e5aafb81f">
 
 [Docker]: https://docs.docker.com/get-started/get-docker/
 [Documentation issue]: https://github.com/Senzing/elasticsearch-v4/issues/new
@@ -212,4 +211,3 @@ If the instructions are not clear, please let us know by opening a new
 [quickstart]: https://www.senzing.com/docs/quickstart/
 [SENZING_ENGINE_CONFIGURATION_JSON]: https://www.senzing.com/docs/tutorials/senzing_engine_config/
 [Senzing]: https://senzing.com
- 

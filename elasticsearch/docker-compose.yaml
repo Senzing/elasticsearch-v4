@@ -1,5 +1,4 @@
 services:
-
   postgres:
     container_name: senzing-postgres
     environment:
@@ -11,7 +10,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "pg_isready -U ${POSTGRES_USERNAME:-postgres} -d ${POSTGRES_DB:-senzing}"
+          "pg_isready -U ${POSTGRES_USERNAME:-postgres} -d ${POSTGRES_DB:-senzing}",
         ]
       interval: 10s
       timeout: 5s
@@ -23,7 +22,7 @@ services:
       - 5432:5432
     restart: always
     volumes:
-      - ${POSTGRES_DIR:-/var/lib/postgresql}:/var/lib/postgresql
+      - ${POSTGRES_DIR:-senzing-postgres-data}:/var/lib/postgresql
 
   initdatabase:
     container_name: senzing-tools-init-database
@@ -50,6 +49,9 @@ services:
       - senzing
     read_only: true
     restart: on-failure
+
+volumes:
+  senzing-postgres-data:
 
 networks:
   senzing:
