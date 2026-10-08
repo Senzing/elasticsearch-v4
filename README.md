@@ -68,6 +68,7 @@ If the instructions are not clear, please let us know by opening a new
      --publish 9200:9200 \
      --env discovery.type=single-node \
      --env xpack.security.enabled=false \
+     --env ES_JAVA_OPTS="-Xms1g -Xmx1g" \
      docker.elastic.co/elasticsearch/elasticsearch:9.5.4
 
    sudo docker run --detach \
