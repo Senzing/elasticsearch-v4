@@ -1,4 +1,4 @@
-package com.senzing.g2.elasticsearch;
+package com.senzing.elasticsearch;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -11,8 +11,8 @@ import jakarta.json.JsonObject;
 
 import org.junit.jupiter.api.Test;
 
-class G2EntityDataTest {
-  // A trimmed export document with the fields G2EntityData reads, plus some it should drop.
+class SenzingEntityDataTest {
+  // A trimmed export document with the fields SenzingEntityData reads, plus some it should drop.
   private static final String ENTITY = """
       {
         "RESOLVED_ENTITY": {
@@ -43,14 +43,14 @@ class G2EntityDataTest {
 
   @Test
   void readsEntityId() {
-    G2EntityData entityData = new G2EntityData(ENTITY);
+    SenzingEntityData entityData = new SenzingEntityData(ENTITY);
     assertEquals(42L, entityData.getEntityID());
     assertEquals("{\"ENTITY_ID\":\"42\"}", entityData.getElasticSearchEntityIdentifier());
   }
 
   @Test
   void documentContainsOnlyRecordJsonDataAndRecordKeys() {
-    JsonObject document = parse(new G2EntityData(ENTITY).getRecordData());
+    JsonObject document = parse(new SenzingEntityData(ENTITY).getRecordData());
     assertEquals(2, document.size());
 
     JsonArray jsonData = document.getJsonArray("JSON_DATA");
@@ -65,5 +65,30 @@ class G2EntityDataTest {
     assertEquals("WATCHLIST", records.getJsonObject(1).getString("DATA_SOURCE"));
     assertEquals("W1", records.getJsonObject(1).getString("RECORD_ID"));
     assertFalse(records.getJsonObject(0).containsKey("MATCH_KEY"));
+  }
+
+  @Test
+  void entityWithNoRecordsHasEmptyArrays() {
+    SenzingEntityData entityData = new SenzingEntityData("{\"RESOLVED_ENTITY\": {\"ENTITY_ID\": 7, \"RECORDS\": []}}");
+    assertEquals(7L, entityData.getEntityID());
+
+    JsonObject document = parse(entityData.getRecordData());
+    assertEquals(0, document.getJsonArray("JSON_DATA").size());
+    assertEquals(0, document.getJsonArray("RECORDS").size());
+  }
+
+  @Test
+  void recordValuesAreIndexedAsStrings() {
+    String entity = """
+        {"RESOLVED_ENTITY": {"ENTITY_ID": 1, "RECORDS": [{
+          "DATA_SOURCE": "CUSTOMERS", "RECORD_ID": "1",
+          "JSON_DATA": {"AMOUNT": 700, "ACTIVE": true, "NOTE": null}
+        }]}}
+        """;
+    JsonObject jsonData = parse(new SenzingEntityData(entity).getRecordData())
+        .getJsonArray("JSON_DATA").getJsonObject(0);
+    assertEquals("700", jsonData.getString("AMOUNT"));
+    assertEquals("true", jsonData.getString("ACTIVE"));
+    assertEquals("null", jsonData.getString("NOTE"));
   }
 }

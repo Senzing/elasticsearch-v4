@@ -4,6 +4,7 @@
   "words": [
     "buildx",
     "CCLA",
+    "changeit",
     "CODEOWNER",
     "CONFIGPATH",
     "cooldown",
@@ -13,6 +14,7 @@
     "Dforce",
     "Dgroup",
     "Djava",
+    "Djavax",
     "dockerfiles",
     "DOCKERHUB",
     "Dpackaging",
@@ -23,6 +25,7 @@
     "ingester",
     "initdatabase",
     "isready",
+    "jacoco",
     "kernelsam",
     "LICENSESTRINGBASE",
     "lucene",
@@ -39,6 +42,7 @@
     "SUPPORTPATH",
     "temurin",
     "trivy",
+    "truststore",
     "vuln",
     "WATCHLIST",
     "xpack"

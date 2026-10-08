@@ -36,7 +36,7 @@ RUN SZ_SDK_VERSION="$(mvn -B -q help:evaluate -Dexpression=sz-sdk.version -Dforc
 
 FROM senzing_runtime
 
-ENV REFRESHED_AT=2026-10-02
+ENV REFRESHED_AT=2026-10-08
 
 LABEL Name="senzing/elasticsearch-v4" \
       Maintainer="support@senzing.com" \
@@ -52,11 +52,11 @@ RUN apt-get update \
   && apt-get -y clean \
   && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /build/target/g2elasticsearch-2.0.0.jar /app/
+COPY --from=builder /build/target/elasticsearch-v4.jar /app/
 
-HEALTHCHECK CMD test -f /app/g2elasticsearch-2.0.0.jar
+HEALTHCHECK CMD test -f /app/elasticsearch-v4.jar
 
 USER 1001
 
 WORKDIR /app
-CMD ["java", "--enable-native-access=ALL-UNNAMED", "-jar", "g2elasticsearch-2.0.0.jar"]
+CMD ["java", "--enable-native-access=ALL-UNNAMED", "-jar", "elasticsearch-v4.jar"]

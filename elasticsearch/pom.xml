@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.senzing</groupId>
-  <artifactId>g2elasticsearch</artifactId>
+  <artifactId>elasticsearch-v4</artifactId>
   <version>2.0.0</version>
   <properties>
     <maven.compiler.release>25</maven.compiler.release>
@@ -11,11 +11,14 @@
       Senzing runtime at ${SENZING_PATH}/er/sdk/java/sz-sdk.jar and must be installed
       into the local Maven repository before building:
         mvn install:install-file -Dfile=/opt/senzing/er/sdk/java/sz-sdk.jar \
-          -DgroupId=com.senzing -DartifactId=sz-sdk -Dversion=4.4.2 -Dpackaging=jar
+          -DgroupId=com.senzing -DartifactId=sz-sdk -Dpackaging=jar \
+          -Dversion="$(mvn -q help:evaluate -Dexpression=sz-sdk.version -DforceStdout)"
     -->
     <sz-sdk.version>4.4.2</sz-sdk.version>
   </properties>
   <build>
+    <!-- A jar name without the version, so the Dockerfile doesn't have to change with the project version -->
+    <finalName>${project.artifactId}</finalName>
     <sourceDirectory>src</sourceDirectory>
     <testSourceDirectory>test</testSourceDirectory>
     <plugins>
@@ -29,6 +32,27 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>3.6.0</version>
+      </plugin>
+
+      <!-- Measures unit test coverage; the report is written to target/site/jacoco -->
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>0.8.15</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>report</id>
+            <phase>test</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
 
       <plugin>
@@ -64,7 +88,7 @@
                 <transformer
                   implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                   <manifestEntries>
-                    <Main-Class>com.senzing.g2.elasticsearch.G2toElastic</Main-Class>
+                    <Main-Class>com.senzing.elasticsearch.SenzingToElastic</Main-Class>
                     <!-- sz-sdk is not shaded in; use the copy that matches the installed native Senzing library -->
                     <Class-Path>/opt/senzing/er/sdk/java/sz-sdk.jar</Class-Path>
                     <Multi-Release>true</Multi-Release>
@@ -95,10 +119,10 @@
       <version>1.1.9</version>
       <scope>runtime</scope>
     </dependency>
-    <!-- The Elasticsearch HTTP client logs through SLF4J; discard it instead of printing a missing-binding warning -->
+    <!-- The Elasticsearch HTTP client logs through SLF4J; SenzingToElastic sets the level to warn -->
     <dependency>
       <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-nop</artifactId>
+      <artifactId>slf4j-simple</artifactId>
       <version>2.0.20</version>
     </dependency>
     <dependency>
