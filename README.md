@@ -103,7 +103,7 @@ If the instructions are not clear, please let us know by opening a new
    ```console
    export ELASTIC_HOSTNAME=senzing-elasticsearch
    export ELASTIC_PORT=9200
-   export ELASTIC_INDEX_NAME=g2index
+   export ELASTIC_INDEX_NAME=senzing-index
    ```
 
 1. Build the docker container.
@@ -160,7 +160,7 @@ If the instructions are not clear, please let us know by opening a new
         "SUPPORTPATH": "/opt/senzing/data"
        },
     "SQL": {
-        "CONNECTION": "postgresql://postgres:postgres@senzing-postgres:5432:G2"
+        "CONNECTION": "postgresql://postgres:postgres@senzing-postgres:5432:senzing"
        }
       }'
     ```
