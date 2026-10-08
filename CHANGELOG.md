@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed `postgresql-client` from the Docker image
 - The default Elasticsearch index name is now `senzing-index` instead of `g2index`
 - Indexes each entity with its entity ID as the document `_id`, so re-running the indexer replaces documents instead of duplicating them
-- Records without `JSON_DATA` no longer stop the export
+- Entities without `RECORDS`, and records without `JSON_DATA`, `DATA_SOURCE`, or `RECORD_ID`, no longer stop the export
 - Exits with status 1 instead of -1 when `SENZING_ENGINE_CONFIGURATION_JSON` is not set
 - Exits with status 1 when `ELASTIC_URL` is not a valid `http` or `https` URL
 - Exits with a non-zero status if any entity fails to index, or if elasticsearch doesn't report on every entity

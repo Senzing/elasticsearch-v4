@@ -11,6 +11,7 @@ import jakarta.json.JsonNumber;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.JsonReader;
+import jakarta.json.JsonValue;
 
 public class SenzingEntityData {
   // This class represents a minimal data representation for a resolved entity in
@@ -38,7 +39,11 @@ public class SenzingEntityData {
 
     // get the json data from the individual records within the resolved entity.
     JsonArrayBuilder jsonDataArrayBuilder = Json.createArrayBuilder();
+    // Senzing includes RECORDS in the export, but an entity without it is indexed with no records
     JsonArray recordsArray = resEntObject.getJsonArray("RECORDS");
+    if (recordsArray == null) {
+      recordsArray = JsonValue.EMPTY_JSON_ARRAY;
+    }
     int numRecordsInArray = recordsArray.size();
     List<SenzingRecordInfo> recordInfoList = new LinkedList<SenzingRecordInfo>();
     for (int i = 0; i < numRecordsInArray; i++) {

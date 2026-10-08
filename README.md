@@ -113,6 +113,7 @@ For more options, see [Install Elasticsearch with Docker] and [Install Kibana wi
 
    :warning: If elasticsearch has security enabled, put the username and password in the URL, for example `https://elastic:password@senzing-elasticsearch:9200`.
    Percent-encode any special characters in them, for example `@` as `%40`.
+   Over `http`, the username and password are sent unencrypted, so use `https` anywhere other than a local demonstration.
    A hostname with an underscore, such as a Docker container named `senzing_es`, works with `http` but not `https`: elasticsearch rejects the TLS connection because underscores aren't allowed in TLS server names.
    For `https`, the elasticsearch certificate must be trusted by Java.
    For a self-signed certificate, add its CA to a truststore, mount the truststore into the container, and point Java at it. For example, add these options to the `docker run` commands below:

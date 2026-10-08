@@ -77,6 +77,16 @@ class SenzingEntityDataTest {
   }
 
   @Test
+  void entityWithoutRecordsListIsIndexedWithNoRecords() {
+    SenzingEntityData entityData = new SenzingEntityData("{\"RESOLVED_ENTITY\": {\"ENTITY_ID\": 8}}");
+    assertEquals(8L, entityData.getEntityID());
+
+    JsonObject document = parse(entityData.getRecordData());
+    assertEquals(0, document.getJsonArray("JSON_DATA").size());
+    assertEquals(0, document.getJsonArray("RECORDS").size());
+  }
+
+  @Test
   void recordWithoutJsonDataIsStillListed() {
     String entity = """
         {"RESOLVED_ENTITY": {"ENTITY_ID": 3, "RECORDS": [
