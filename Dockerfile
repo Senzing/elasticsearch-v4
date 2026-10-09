@@ -1,36 +1,62 @@
-ARG BASE_IMAGE=senzing/senzingapi-runtime:3.13.0@sha256:c9c3502b35fbcc30d3cdbe3597392f964c7a15db52736dac938d28916d121f70
-FROM ${BASE_IMAGE}
+ARG BASE_IMAGE=senzing/senzingsdk-runtime:4.4.2@sha256:1f86d22ca02fe4558010420d76e64c8536a9c6dc53783ddda3da5dfda34d5fb9
+ARG BUILDER_IMAGE=maven:3.9.16-eclipse-temurin-25@sha256:93b8a14ea2f412782e4e842651273b4d903e35cc496284f178fbbe2d67d00976
 
-ENV REFRESHED_AT=2025-10-22
+# -----------------------------------------------------------------------------
+# Stage: senzing_runtime
+# -----------------------------------------------------------------------------
 
-LABEL Name="senzing/elasticsearch" \
+FROM ${BASE_IMAGE} AS senzing_runtime
+
+# -----------------------------------------------------------------------------
+# Stage: builder
+# -----------------------------------------------------------------------------
+
+# The jar is platform-independent, so build it once on the build platform instead of under emulation.
+
+FROM --platform=$BUILDPLATFORM ${BUILDER_IMAGE} AS builder
+
+# The Senzing v4 Java SDK is not on Maven Central; install the copy that ships with the runtime.
+
+COPY --from=senzing_runtime /opt/senzing/er/sdk/java/sz-sdk.jar /tmp/sz-sdk.jar
+COPY elasticsearch /build
+WORKDIR /build
+
+RUN SZ_SDK_VERSION="$(mvn -B -q help:evaluate -Dexpression=sz-sdk.version -DforceStdout)" \
+  && mvn -B install:install-file \
+      -Dfile=/tmp/sz-sdk.jar \
+      -DgroupId=com.senzing \
+      -DartifactId=sz-sdk \
+      -Dversion="${SZ_SDK_VERSION}" \
+      -Dpackaging=jar \
+  && mvn -B clean package
+
+# -----------------------------------------------------------------------------
+# Stage: final
+# -----------------------------------------------------------------------------
+
+FROM senzing_runtime
+
+ENV REFRESHED_AT=2026-10-08
+
+LABEL Name="senzing/elasticsearch-v4" \
       Maintainer="support@senzing.com" \
-      Version="1.1.0"
+      Version="2.0.0"
 
 # Run as "root" for system installation.
 
 USER root
 
-COPY elasticsearch /build
-WORKDIR /build
-
 RUN apt-get update \
   && apt-get -y install --no-install-recommends \
-      postgresql-client \
-      openjdk-21-jre-headless \
-      maven \
+      openjdk-25-jre-headless \
   && apt-get -y clean \
-  && mvn clean install \
-  && mkdir /app \
-  && cp target/g2elasticsearch-1.0.0-SNAPSHOT.jar /app/ \
-  && rm -rf /build \
-  && apt-get -y remove maven \
-  && apt-get -y autoremove \
-  && apt-get -y clean
+  && rm -rf /var/lib/apt/lists/*
 
-HEALTHCHECK CMD test -f /app/g2elasticsearch-1.0.0-SNAPSHOT.jar
+COPY --from=builder /build/target/elasticsearch-v4.jar /app/
+
+HEALTHCHECK CMD test -f /app/elasticsearch-v4.jar
 
 USER 1001
 
 WORKDIR /app
-CMD ["java", "-jar", "g2elasticsearch-1.0.0-SNAPSHOT.jar"]
+CMD ["java", "--enable-native-access=ALL-UNNAMED", "-jar", "elasticsearch-v4.jar"]
