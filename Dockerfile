@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=senzing/senzingsdk-runtime:4.4.2@sha256:1f86d22ca02fe4558010420d76e64c8536a9c6dc53783ddda3da5dfda34d5fb9
+ARG BASE_IMAGE=senzing/senzingsdk-runtime:4.5.0@sha256:1d00662834b4fe88fcdc924cf0edbfd9351bbc3ab4b229673894b5eb2a93da06
 ARG BUILDER_IMAGE=maven:3.9.16-eclipse-temurin-25@sha256:93b8a14ea2f412782e4e842651273b4d903e35cc496284f178fbbe2d67d00976
 
 # -----------------------------------------------------------------------------
